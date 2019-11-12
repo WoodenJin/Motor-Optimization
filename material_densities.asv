@@ -1,0 +1,5 @@
+densities = containers.Map;
+densities('M-19 Steel') = 7650;
+densities('Hiperco-50') = 
+densities('Copper') = 
+densities('N42') = 

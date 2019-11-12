@@ -84,7 +84,7 @@ function g = calc_geometry(params)
     g.r.arclist = [g.r.p4, g.r.p7, [0, 0];
                    g.r.p7, g.r.p3, [0, 0];
                    g.r.p6, g.r.p5, [0, 0];
-                   ]
+                   ];
                
     g.r_airgap =  mean([g.s.r1, g.r.r1]);
     

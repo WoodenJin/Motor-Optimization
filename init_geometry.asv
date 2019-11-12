@@ -128,11 +128,9 @@ addblocklabel(p3,'Air', 0, '<None>', '<None>', 0, 0, 0);        % airgap
 
 % Draw Boundaries and Set Boundary Conditions %
 muo = pi*4.e-7;
-Rbd_stator = g.s.r3;     
-Rbd_rotor = g.r.r3; 
-mi_addboundprop('Asymptotic_1', 0, 0, 0, 0, 0, 0, 1/(muo*1e-3*Rbd_stator), 0, 2);
-mi_addboundprop('Asymptotic_2', 0, 0, 0, 0, 0, 0, 1/(muo*1e-3*Rbd_rotor), 0, 2);
-
+Rbd_outer = 2*max([g.s.r3, g.r.r3]);     
+Rbd_inner = min(2*[g.s.r3, g.r.r3]); 
+mi_addboundprop('Asymptotic', 0, 0, 0, 0, 0, 0, 1/(muo*1e-3*Rbd_outer), 0, 2);
 
 R5 = [cos(g.n_s*g.s.theta), -sin(g.n_s*g.s.theta); sin(g.n_s*g.s.theta), cos(g.n_s*g.s.theta)];
 p1 = [0; g.r_airgap];
@@ -171,12 +169,12 @@ mi_setsegmentprop('airgap_vertical_2', 1, 0, 0, 2);
 % Stator Yoke  BC
 mi_clearselected()
 mi_selectgroup(3); 
-mi_setarcsegmentprop(10, 'Asymptotic_1', 0, 1);
+mi_setarcsegmentprop(10, 'Asymptotic', 0, 1);
 
 % Rotor Backiron BC
 mi_clearselected()
 mi_selectgroup(4);
-mi_setarcsegmentprop(10, 'Asymptotic_2', 0, 2);
+mi_setarcsegmentprop(10, 'Asymptotic', 0, 2);
 
 % Stator Side BC
 mi_clearselected()

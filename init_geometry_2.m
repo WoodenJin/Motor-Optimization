@@ -1,5 +1,8 @@
 %%% Create Motor Geometry in FEMM %%%
-function theta_elec = init_geometry(g, theta, id, iq, hidewindow)
+%%% This version puts an additional layer of air behind the rotor and steel
+%%% back-iron.  Hopefully makes results more accurite for teh saturated
+%%% back-iron case.
+function theta_elec = init_geometry_2(g, theta, id, iq, hidewindow)
 if(nargin<5)
     hidewindow = 1;
 end
@@ -24,12 +27,21 @@ mi_selectgroup(1);
 mi_copyrotate([0, 0], -radtodeg(g.s.theta), g.n_s - 1);
 
 % Draw Stator Back-iron %
+% Draw air behind stator back-iron %
 addnode_group(g.s.boundary_point, 'stator_backiron', 3);
+p1 = g.s.boundary_point + .2*(g.s.boundary_point - g.s.p1);
+R_bd_1 = norm(p1);
+addnode_group(p1, 'sa', 3);
 mi_selectgroup(3);
 mi_copyrotate([0, 0], -radtodeg(g.s.theta*g.n_s), 1);
 R = [cos(g.s.theta*g.n_s) -sin(g.s.theta*g.n_s); sin(g.s.theta*g.n_s) cos(g.s.theta*g.n_s)];
 p2 = R'*g.s.boundary_point';
 addarc_group(g.s.boundary_point, p2', [0, 0], 'stator_backiron', 10, 3);
+addarc_group(p1, [R'*p1']', [0, 0], 'stator_air', 10, 17);
+addsegment_group(g.s.boundary_point, p1', 'stator_air_side', 1, 18)
+addsegment_group(p2', [R'*p1']', 'stator_air_side', 1, 18)
+R = [cos(g.s.theta/2) -sin(g.s.theta/2); sin(g.s.theta/2) cos(g.s.theta/2)];
+stator_air_label_pt = R'*[mean([g.s.boundary_point; p1])]';
 
 
 % Draw rotor %
@@ -37,6 +49,7 @@ addnodelist_group(g.r.pointlist, 'rotor', 2);
 addsegmentlist_group(g.r.segmentlist, 'rotor', 1, 2);
 addarclist_group(g.r.arclist, 'rotor', 10, 2);
 
+mi_clearselected();
 mi_selectgroup(2);
 mi_mirror(0, 0, g.r.p2(1), g.r.p2(2));
 mi_selectgroup(2);
@@ -45,15 +58,25 @@ mi_selectgroup(2);
 mi_moverotate([0, 0], -radtodeg(theta));
 
 % Draw rotor back-iron %
+% Draw air behind rotor back-iron %
+R = [cos(g.r.theta/4) -sin(g.r.theta/4); sin(g.r.theta/4) cos(g.r.theta/4)];
 R1 = [cos(theta) -sin(theta); sin(theta) cos(theta)];
 R2 = [cos(g.r.theta*g.n_p+theta) -sin(g.r.theta*g.n_p+theta); sin(g.r.theta*g.n_p+theta) cos(g.r.theta*g.n_p+theta)];
+R3 = [cos(g.r.theta*g.n_p) -sin(g.r.theta*g.n_p); sin(g.r.theta*g.n_p) cos(g.r.theta*g.n_p)];
 p1 = R1'*g.r.boundary_point';
 p2 = R2'*g.r.boundary_point';
+p3 = p1 +  R1'*(g.r.boundary_point-[0, norm(g.r.p5)])';
+p4 = R3'*p3;
+R_bd_2 = norm(p3);
+rotor_air_label_pt = R'*[mean([p1';p3'])]';
 addnode_group(p1, 'rotor_backiron', 4);
+addnode_group(p3, 'rotor_air',20);
 mi_selectgroup(4);
 mi_copyrotate([0, 0], -radtodeg(g.r.theta*g.n_p), 1);
 addarc_group(p1', p2', [0, 0], 'rotor_backiron', 10, 4);
-
+addarc_group(p3', p4', [0, 0], 'rotor_air', 10, 19);
+addsegment_group(p1', p3', 'rotor_air_side', 1, 20)
+addsegment_group(p2', p4', 'rotor_air_side', 1, 20)
 
 
 
@@ -122,17 +145,19 @@ end
 p1 = mean([g.s.p5; g.s.p6; g.s.p7; g.s.p8])';
 p2 = R1'*mean([g.r.p2; g.r.p3])';
 p3 =  mean([g.s.p2; g.s.p3; g.s.p9]);
+p4 = rotor_air_label_pt;
+p5 = stator_air_label_pt;
+addblocklabel(p4,'Air', 0, '<None>', '<None>', 0, 0, 0);        % airgap
 addblocklabel(p1,g.s.material, 0, '<None>', '<None>', 0, 1, 0); % stator steel
 addblocklabel(p2,g.r.backiron_material, 0, '<None>', '<None>', 0, 2, 0); % rotor back iron
 addblocklabel(p3,'Air', 0, '<None>', '<None>', 0, 0, 0);        % airgap
+addblocklabel(p5,'Air', 0, '<None>', '<None>', 0, 0, 0);        % airgap
+
 
 % Draw Boundaries and Set Boundary Conditions %
 muo = pi*4.e-7;
-Rbd_stator = g.s.r3;     
-Rbd_rotor = g.r.r3; 
-mi_addboundprop('Asymptotic_1', 0, 0, 0, 0, 0, 0, 1/(muo*1e-3*Rbd_stator), 0, 2);
-mi_addboundprop('Asymptotic_2', 0, 0, 0, 0, 0, 0, 1/(muo*1e-3*Rbd_rotor), 0, 2);
-
+mi_addboundprop('Asymptotic_1', 0, 0, 0, 0, 0, 0, 1/(muo*1e-3*R_bd_1), 0, 2);
+mi_addboundprop('Asymptotic_2', 0, 0, 0, 0, 0, 0, 1/(muo*1e-3*R_bd_2), 0, 2);
 
 R5 = [cos(g.n_s*g.s.theta), -sin(g.n_s*g.s.theta); sin(g.n_s*g.s.theta), cos(g.n_s*g.s.theta)];
 p1 = [0; g.r_airgap];
@@ -171,18 +196,24 @@ mi_setsegmentprop('airgap_vertical_2', 1, 0, 0, 2);
 % Stator Yoke  BC
 mi_clearselected()
 mi_selectgroup(3); 
-mi_setarcsegmentprop(10, 'Asymptotic_1', 0, 1);
+mi_setarcsegmentprop(17, 'Asymptotic_1', 0, 1);
 
 % Rotor Backiron BC
 mi_clearselected()
 mi_selectgroup(4);
-mi_setarcsegmentprop(10, 'Asymptotic_2', 0, 2);
+mi_setarcsegmentprop(19, 'Asymptotic_2', 0, 2);
 
 % Stator Side BC
 mi_clearselected()
 mi_addboundprop('stator_boundary', 0, 0, 0, 0, 0, 0, 0, 0, 5); 
 mi_selectgroup(6); 
 mi_setsegmentprop('stator_boundary', 1, 0, 0, 1);
+mi_clearselected()
+mi_addboundprop('stator_air_side', 0, 0, 0, 0, 0, 0, 0, 0, 5); 
+mi_selectgroup(18); 
+mi_setsegmentprop('stator_air_side', 1, 0, 0, 1);
+
+
 
 %Rotor Side BC
 mi_clearselected()
@@ -190,6 +221,9 @@ mi_addboundprop('rotor_boundary', 0, 0, 0, 0, 0, 0, 0, 0, 5);
 mi_selectgroup(8); 
 mi_setsegmentprop('rotor_boundary', 1, 0, 0, 2);
 mi_clearselected()
+mi_addboundprop('rotor_air_side', 0, 0, 0, 0, 0, 0, 0, 0, 5); 
+mi_selectgroup(20); 
+mi_setsegmentprop('rotor_air_side', 1, 0, 0, 2);
 
 mi_zoomnatural;
 
