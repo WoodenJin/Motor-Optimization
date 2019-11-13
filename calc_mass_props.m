@@ -1,4 +1,4 @@
-function [mass, m_stator, m_rotor, j_rotor] = calc_mass_props(g)
+function [mass, m_stator, m_rotor, j_rotor, r_phase] = calc_mass_props(g)
 
 material_densities;
 % fem_name = sprintf('test.fem');

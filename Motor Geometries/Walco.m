@@ -26,7 +26,8 @@ g.s.stacking_factor = .95;         % lamination stackign factor
 g.r.magnet_type = 'N42';            % Rotor Magnet Type
 g.r.backiron_material = 'Hiperco-50';   % Rotor Back Iron Material
 
-g.s.imap = ['A', 'A', 'b', 'b', 'C', 'C'];
+g.s.imap = ['A', 'A', 'b', 'b', 'C', 'C'];%  phase current to slot mapping
+g.s.span = 3;                               % number of slots spanned by each turn
 g = calc_geometry(g);
 
  

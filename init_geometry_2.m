@@ -12,6 +12,7 @@ delta_theta_rm = theta;
 theta = theta/g.r.ppairs;
 
 openfemm(hidewindow);       % Do not show the window, makes it much faster
+main_resize(1200, 900);
 newdocument(0);   % 0 = magnetics, 1 = electrostatics, etc..
 Freq=0;
 mi_probdef(Freq, 'millimeters', 'planar', 1.e-8, g.depth, 30);
