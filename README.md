@@ -17,4 +17,4 @@ Features to add:
 - optimization/parameter sweeping
 
 ![T-motor U8](https://github.com/bgkatz/Motor-Optimization/blob/master/walco_animation.gif)
-![Walco Motor](https://github.com/bgkatz/Motor-Optimization/blob/master/walco_animation.gif)
+![Walco Motor](https://github.com/bgkatz/Motor-Optimization/blob/master/u8_animation.gif)
